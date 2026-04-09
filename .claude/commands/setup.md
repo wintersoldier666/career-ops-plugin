@@ -1,13 +1,8 @@
 ---
-name: setup
-description: "Set up your job search profile. Paste your resume or answer a few questions. Takes 5 minutes. Needed before evaluating jobs."
-argument-hint: "[--reset to start over]"
-user-invocable: true
-allowed-tools:
-  - Read
-  - Write
-  - Glob
+description: "Set up your job search profile. Paste your resume or answer questions."
+allowed-tools: [Read, Write, Glob]
 ---
+
 
 # Set Up Your Profile
 

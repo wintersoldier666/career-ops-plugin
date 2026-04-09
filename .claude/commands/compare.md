@@ -1,12 +1,8 @@
 ---
-name: compare
-description: "Compare multiple job opportunities side by side. See scores, compensation, pros/cons, and a recommendation. Use when someone says 'compare my options', 'which job should I take', 'rank my opportunities', or 'compare these roles'."
-argument-hint: "[company names to compare, or 'my top options']"
-user-invocable: true
-allowed-tools:
-  - Read
-  - Glob
+description: "Compare multiple job opportunities side by side."
+allowed-tools: [Read, Glob]
 ---
+
 
 # Compare Opportunities
 

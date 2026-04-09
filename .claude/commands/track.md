@@ -1,13 +1,8 @@
 ---
-name: track
-description: "View and update your job application tracker. See all applications, filter by status, update progress, and get statistics on your search. Use when someone says 'show my applications', 'how is my job search going', 'update status', or 'tracker'."
-argument-hint: "[status filter, company name, or 'update Company to Status']"
-user-invocable: true
-allowed-tools:
-  - Read
-  - Write
-  - Glob
+description: "View and update your job application tracker."
+allowed-tools: [Read, Write, Glob]
 ---
+
 
 # Application Tracker
 

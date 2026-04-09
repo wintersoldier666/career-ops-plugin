@@ -1,13 +1,8 @@
 ---
-name: quick-eval
-description: "Quick job evaluation. Paste a JD and get a score plus one-paragraph summary. Faster than a full evaluate. Use when someone says 'quick eval', 'quick score', or 'just give me a number'."
-model: haiku
-argument-hint: "<paste JD or URL>"
-user-invocable: true
-allowed-tools:
-  - Read
-  - WebFetch
+description: "Fast job evaluation — score plus one paragraph, no file saves."
+allowed-tools: [Read, WebSearch, WebFetch]
 ---
+
 
 # Quick Evaluation
 

@@ -1,13 +1,8 @@
 ---
-name: tailor-resume
-description: "Generate an ATS-optimized resume tailored to a specific job posting. Creates clean HTML you can print to PDF. Works for any industry. Use when someone says 'tailor my resume', 'make me a resume', 'create a resume for', or 'update my resume for'."
-argument-hint: "<company name or 'for the latest evaluation'>"
-user-invocable: true
-allowed-tools:
-  - Read
-  - Write
-  - Glob
+description: "Generate an ATS-optimized resume tailored to a specific job posting."
+allowed-tools: [Read, Write, Glob]
 ---
+
 
 # Tailor Your Resume
 

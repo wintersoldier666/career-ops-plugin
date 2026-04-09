@@ -1,15 +1,8 @@
 ---
-name: apply
-description: "Help fill out a job application form. Generates personalized answers for every field using your profile and evaluation. Never auto-submits. Use when someone says 'help me apply', 'fill out this application', or 'application for'."
-argument-hint: "<company name or 'help me with this application'>"
-user-invocable: true
-disable-model-invocation: true
-allowed-tools:
-  - Read
-  - Write
-  - Glob
-  - WebFetch
+description: "Help fill out a job application form with personalized answers."
+allowed-tools: [Read, Write, Glob, WebFetch]
 ---
+
 
 # Application Form Assistant
 
@@ -118,7 +111,6 @@ Show EVERY generated answer before any action:
 1. "{question}" - {answer}
 2. "{question}" - {answer}
 
----
 
 Review these answers. You can:
 - Ask me to revise any answer

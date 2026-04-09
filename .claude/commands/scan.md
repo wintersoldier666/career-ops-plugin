@@ -1,14 +1,8 @@
 ---
-name: scan
-description: "Scan company career pages for job openings that match your profile. Uses web search with site-scoped queries to find listings on Greenhouse, Lever, Ashby, SmartRecruiters, and other ATS platforms. Use when someone says 'scan for jobs', 'check careers page', 'find openings at', or 'search for roles'."
-argument-hint: "<company name, careers URL, or 'all' to scan watchlist>"
-user-invocable: true
-allowed-tools:
-  - Read
-  - Write
-  - WebSearch
-  - Glob
+description: "Scan company career pages for job openings that match your profile."
+allowed-tools: [Read, Write, WebSearch, Glob]
 ---
+
 
 # Scan for Job Openings
 

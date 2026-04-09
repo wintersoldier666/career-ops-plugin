@@ -1,12 +1,8 @@
 ---
-name: help
-description: "See all available career-ops skills, what they do, and which one to use next based on where you are in your job search. Use when someone says 'help', 'what can you do', 'how does this work', or seems unsure what to do next."
-argument-hint: "[skill name for detailed help]"
-user-invocable: true
-allowed-tools:
-  - Read
-  - Glob
+description: "Show all available career-ops commands and how to use them."
+allowed-tools: []
 ---
+
 
 # career-ops Help
 

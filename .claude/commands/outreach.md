@@ -1,14 +1,8 @@
 ---
-name: outreach
-description: "Draft personalized outreach messages for LinkedIn connections, hiring managers, or recruiters. Creates targeted messages using a hook + proof + proposal structure. Under 300 characters for connection requests. Use when someone says 'draft outreach', 'message the recruiter', 'reach out to', or 'write a LinkedIn message'."
-argument-hint: "<contact name and company, or 'outreach for Company'>"
-user-invocable: true
-allowed-tools:
-  - Read
-  - Write
-  - WebSearch
-  - Glob
+description: "Draft personalized outreach messages for LinkedIn or email."
+allowed-tools: [Read, Write, WebSearch, Glob]
 ---
+
 
 # Draft Outreach
 
@@ -82,11 +76,9 @@ Good: "I'd appreciate any advice on standing out for the {role} opening"
 **Platform:** {LinkedIn connection / LinkedIn message / Email / Follow-up}
 **Context:** {role or department}
 
----
 
 {the message, properly formatted}
 
----
 
 **Character count:** {n} / {limit for platform}
 **Tone:** {Professional / Warm / Direct}
