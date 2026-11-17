@@ -1,0 +1,133 @@
+diff --git a/FAQ.md b/FAQ.md
+index 0472d24..97a0b4f 100644
+--- a/FAQ.md
++++ b/FAQ.md
+@@ -176,6 +176,9 @@ Fixed: cleared items stay cleared, across devices too. The list only shows items
+ **What are source add-ons?**
+ Small JSON definitions (hosted anywhere, e.g. a gist) that tell AudioYam how to search a site. Add them in Settings → Addons, and reorder or switch them off in Settings → Sources. Results appear on book pages under "Sources". Only install add-ons you trust.
+ 
++**Can an add-on use my TorBox key?**
++Yes. A source add-on can write `{TORBOX_KEY}` in its request (see `addons/torbox-search.json`) and AudioYam fills in the key saved in Settings → Cloud. It is only filled in for `torbox.app` addresses, so no other add-on ever sees it. Install it by pasting the manifest's raw link in Settings → Addons.
++
+ **Why do some results say "loose matches"?**
+ Results that don't clearly match the book (title words and the author's name) are hidden behind "Show N loose matches", so the list isn't full of other books with similar titles.
+ 
+diff --git a/addons/torbox-search.json b/addons/torbox-search.json
+new file mode 100644
+index 0000000..d535926
+--- /dev/null
++++ b/addons/torbox-search.json
+@@ -0,0 +1,30 @@
++{
++  "id": "torbox-search",
++  "name": "TorBox Search",
++  "version": "1.0.0",
++  "description": "Searches TorBox's own index for the book you're looking at. Uses the TorBox key already saved in AudioYam; results marked cached play instantly.",
++  "contentType": "",
++  "rateLimit": { "requestsPerMinute": 20 },
++  "matching": { "threshold": 0.5 },
++  "adapters": {
++    "source": {
++      "request": {
++        "method": "GET",
++        "url": "https://search-api.torbox.app/torrents/search/{QUERY}?metadata=false&check_cache=true&check_owned=false",
++        "headers": { "Authorization": "Bearer {TORBOX_KEY}" },
++        "timeout": 30000
++      },
++      "response": {
++        "resultsPath": "data.torrents",
++        "mapping": {
++          "title": "raw_title",
++          "magnetUrl": "magnet",
++          "infoHash": "hash",
++          "sizeBytes": "size",
++          "seeders": "last_known_seeders",
++          "debridCache": "cached"
++        }
++      }
++    }
++  }
++}
+diff --git a/src/sources/sourceaddons.js b/src/sources/sourceaddons.js
+index 3190e3a..55ab53c 100644
+--- a/src/sources/sourceaddons.js
++++ b/src/sources/sourceaddons.js
+@@ -3,7 +3,7 @@
+ // JSON response into results carrying a magnet link / info-hash. Inkwell hands
+ // the magnet to the user's TorBox or Real-Debrid account to stream it.
+ import { getJson, sendJson } from '../lib/http.js';
+-import { addons, persisted } from '../lib/store.js';
++import { addons, debrid, persisted } from '../lib/store.js';
+ import { logError, redact } from '../lib/report.js';
+ import { words, matches, cleanAuthor, otherBook, searchTitle } from '../lib/match.js';
+ import { infoHash, torboxCached } from './debrid.js';
+@@ -16,10 +16,22 @@ export const sourceLabel = (name) => name;
+ 
+ export const sourceAddons = () => addons.get().filter((a) => a.kind === 'source');
+ 
++// An addon may ask for the TorBox key the app already stores ({TORBOX_KEY}), so you don't
++// paste it again. It is filled in only for torbox.app addresses: any other addon gets nothing.
++export const isTorboxUrl = (u) => {
++  try {
++    const h = new URL(u).hostname;
++    return h === 'torbox.app' || h.endsWith('.torbox.app');
++  } catch {
++    return false;
++  }
++};
++export const torboxKeyFor = (url) => (isTorboxUrl(url) ? String(debrid.get().torbox || '').trim() : '');
++
+ // ---- helpers ----------------------------------------------------------------
+ function fill(v, vars, encode) {
+   if (typeof v === 'string')
+-    return v.replace(/\{(TITLE|AUTHOR|QUERY|NARRATOR|ISBN|LIMIT)\}/gi, (_, k) => {
++    return v.replace(/\{(TITLE|AUTHOR|QUERY|NARRATOR|ISBN|LIMIT|TORBOX_KEY)\}/gi, (_, k) => {
+       const val = vars[k.toUpperCase()] ?? '';
+       return encode ? encodeURIComponent(val) : val;
+     });
+@@ -161,14 +173,21 @@ function runOnce(addon, p, retry = 0) {
+ }
+ 
+ const slowSources = new Map(); // addon id -> { fails, at }: sources that keep timing out
+-async function searchOnce(addon, vars, key, { title = '', author = '', query = '' }, retry) {
++async function searchOnce(addon, vars0, key, { title = '', author = '', query = '' }, retry) {
+   const src = addon.manifest.adapters.source;
++  let vars = vars0;
+   await takeSlot(addon);
+ 
+   const req = src.request || {};
+   const method = (req.method || 'GET').toUpperCase();
++  const rawUrl = fill(req.url, vars, true);
++  const wantsKey = /\{TORBOX_KEY\}/i.test(JSON.stringify([req.url, req.headers, req.body]));
++  if (wantsKey) {
++    vars = { ...vars, TORBOX_KEY: torboxKeyFor(rawUrl) };
++    if (!vars.TORBOX_KEY) throw Object.assign(new Error(isTorboxUrl(rawUrl) ? 'Add your TorBox key in Settings → Cloud first' : 'Only torbox.app addons can use the TorBox key'), { final: true });
++  }
+   const url = fill(req.url, vars, true);
+-  const headers = req.headers || {};
++  const headers = fill(req.headers || {}, vars, false);
+   // Torrent search sites can take a while; the second go waits longer. A source that timed out
+   // twice in the last half hour (down, or very slow) gets only 10 s — the others aren't held up.
+   const id = addon.manifest.id;
+diff --git a/tests/torboxkey.test.js b/tests/torboxkey.test.js
+new file mode 100644
+index 0000000..aa8ecc2
+--- /dev/null
++++ b/tests/torboxkey.test.js
+@@ -0,0 +1,16 @@
++import { describe, it, expect } from 'vitest';
++import { isTorboxUrl } from '../src/sources/sourceaddons.js';
++import { isSourceManifest } from '../src/sources/sourceaddons.js';
++import manifest from '../addons/torbox-search.json';
++
++describe('TorBox addon key', () => {
++  it('only torbox.app addresses may receive the stored key', () => {
++    expect(isTorboxUrl('https://search-api.torbox.app/torrents/search/x')).toBe(true);
++    expect(isTorboxUrl('https://torbox.app.evil.com/x')).toBe(false);
++    expect(isTorboxUrl('https://eviltorbox.app/x')).toBe(false);
++    expect(isTorboxUrl('nonsense')).toBe(false);
++  });
++  it('the bundled manifest is a valid source addon', () => {
++    expect(isSourceManifest(manifest)).toBe(true);
++  });
++});
